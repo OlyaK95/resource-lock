@@ -17,17 +17,13 @@ trait UsesRelationManagerResourceLock
 
     public function bootUsesRelationManagerResourceLock(): void
     {
-        $this->parentClass =
-            "App\\Models\\" .
-            class_basename($this->getRelationship()->getParent());
-
-        $this->relatedClass =
-            "App\\Models\\" .
-            class_basename($this->getRelationship()->getRelated());
+        $this->parentClass = get_class($this->getRelationship()->getParent());
+        $this->relatedClass = get_class($this->getRelationship()->getRelated());
     }
 
     #[On('resourceLockObserver::unlock')]
-    public function resourceLockObserverUnlock(){
+    public function resourceLockObserverUnlock()
+    {
         if ($this->relatedRecord) {
             if ($this->relatedRecord->unlock(force: true)) {
                 $this->closeLockedResourceModal();
@@ -59,7 +55,7 @@ trait UsesRelationManagerResourceLock
     ): mixed {
         parent::mountTableAction($name, $record);
 
-        if ($name == "edit") {
+        if ($name == 'edit') {
             $this->relatedRecord = $this->relatedClass::find($record);
             $this->checkIfResourceLockHasExpired($this->relatedRecord);
             $this->lockResource($this->relatedRecord);
@@ -84,9 +80,9 @@ trait UsesRelationManagerResourceLock
 
     public function resourceLockReturnUrl()
     {
-        $parentClassResource = "App\\Filament\\Resources\\" .
-            class_basename($this->getRelationship()->getParent()) . "Resource";
-        return $parentClassResource::getUrl("edit", ['record' => $this->getOwnerRecord()->id]);
+        $parentClassResource = Filament::getCurrentPanel()->getModelResource($this->getRelationship()->getParent());
+
+        return $parentClassResource::getUrl('edit', ['record' => $this->getOwnerRecord()->id]);
     }
 
     public function getResourceLockOwner(): void
